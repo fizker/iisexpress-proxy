@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 var os = require('os'),
+    http = require('http'),
     proxy = require('http-proxy'),
     pkg = require('./package');
 
@@ -51,12 +52,10 @@ Object.keys(interfaces).forEach(function(name) {
   });
 });
 
-proxy.createProxyServer({
+var proxyServer = proxy.createProxyServer({
   target: protocolPrefix + host + ':' + port,
   secure: false,
   changeOrigin: true
-}).listen(proxyPort, function() {
-  console.log('Listening... [press Control-C to exit]');
 }).on('error', function (err, req, res) {
   console.log(err.stack);
   console.log('Listening... [press Control-C to exit]');
@@ -64,4 +63,11 @@ proxy.createProxyServer({
     'Content-Type': 'text/plain'
   });
   res.end('Aw snap! Something went wrong. Check your console to see the error.');
+});
+
+var server = http.createServer(function(req, res) {
+  proxyServer.web(req, res);
+});
+server.listen(proxyPort, function() {
+  console.log('Listening... [press Control-C to exit]');
 });
