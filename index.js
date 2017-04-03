@@ -66,6 +66,20 @@ var proxyServer = proxy.createProxyServer({
 });
 
 var server = http.createServer(function(req, res) {
+  // replace res.writeHead
+  var _writeHead = res.writeHead;
+  res.writeHead = function(statusCode, statusMessage, headers) {
+    if(headers === undefined) {
+      headers = statusMessage;
+      statusMessage = undefined;
+    }
+
+    if(headers && headers.location) {
+      headers.location = headers.location.replace(new RegExp('(.*)localhost:' + port + '(.*)', 'i'), '$1' + host + ':' + proxyPort + '$2')
+    }
+
+    _writeHead.apply(this, arguments);
+  };
   proxyServer.web(req, res);
 });
 server.listen(proxyPort, function() {
